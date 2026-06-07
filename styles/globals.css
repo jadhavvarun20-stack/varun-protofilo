@@ -113,16 +113,16 @@ a{color:inherit}
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-height:42px;
-  padding:11px 16px;
+  min-height:44px;
+  padding:12px 20px;
   border:1px solid transparent;
-  border-radius:12px;
+  border-radius:13px;
   background:linear-gradient(135deg,var(--accent),var(--accent-3));
   color:#061018;
   font-weight:900;
   text-decoration:none;
-  box-shadow:0 16px 42px rgba(65,224,183,0.18);
-  transition:transform 180ms ease,border-color 180ms ease,background 180ms ease;
+  box-shadow:0 14px 40px rgba(65,224,183,0.22);
+  transition:transform 200ms ease,border-color 200ms ease,background 200ms ease,box-shadow 200ms ease;
   position:relative;
   overflow:hidden;
 }
@@ -135,8 +135,8 @@ a{color:inherit}
   transition:transform 520ms ease;
 }
 .btn:hover:before{transform:translateX(120%)}
-.btn:hover{transform:translateY(-2px)}
-.btn.large{min-height:50px;padding:13px 20px}
+.btn:hover{transform:translateY(-3px);box-shadow:0 18px 50px rgba(65,224,183,0.28)}
+.btn.large{min-height:52px;padding:14px 24px;font-size:15px}
 .btn.ghost,.btn.outline{
   background:rgba(255,255,255,0.035);
   border-color:rgba(255,255,255,0.1);
@@ -183,20 +183,24 @@ h1{
   margin:0;
   font-size:clamp(46px,7vw,86px);
   line-height:0.96;
-  letter-spacing:0;
+  letter-spacing:-1px;
+  font-weight:950;
+  color:var(--text);
 }
 .name{
   display:inline-block;
-  background:linear-gradient(135deg,#fff 10%,var(--accent) 42%,var(--accent-2) 72%,var(--accent-3));
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 50%,var(--accent-3) 100%);
   -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
   background-clip:text;
-  color:transparent;
+  font-weight:950;
 }
 .lead{
   max-width:720px;
   margin:22px 0 0;
-  color:#b9c4d2;
+  color:#c8d8e8;
   font-size:18px;
+  line-height:1.7;
 }
 .signal-row{
   display:grid;
@@ -338,7 +342,16 @@ h1{
 }
 .card-topline span:nth-child(2){background:var(--accent-2)}
 .card-topline span:nth-child(3){background:var(--accent-4)}
-.hero-right h3{font-size:28px;margin:0 0 8px}
+.hero-right h3{
+  font-size:28px;
+  margin:0 0 8px;
+  color:var(--text);
+  font-weight:900;
+  background:linear-gradient(135deg,#ffffff 0%,var(--accent) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
 .terminal-card{
   display:grid;
   gap:9px;
@@ -490,9 +503,10 @@ section h2:before{
   filter:blur(2px);
 }
 .dev-card:hover{
-  transform:translateY(-5px);
+  transform:translateY(-6px);
   border-color:rgba(49,232,181,0.34);
-  background:rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.08);
+  box-shadow:0 20px 60px rgba(49,232,181,0.15);
 }
 .dev-card span{
   display:inline-grid;
@@ -741,7 +755,17 @@ section h2:before{
 body.loaded #loader{opacity:0;visibility:hidden;pointer-events:none;transition:opacity 420ms ease,visibility 420ms ease}
 
 #cursor{display:none}
-#bgCanvas{display:none}
+#bgCanvas {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  pointer-events: none;
+  background: transparent;
+}
 .reveal{opacity:0;transform:translateY(18px);transition:opacity 680ms ease,transform 680ms ease}
 .reveal.in{opacity:1;transform:none}
 @keyframes riseIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
@@ -800,6 +824,176 @@ a:focus,button:focus,input:focus,textarea:focus{outline:2px solid rgba(65,224,18
   *,body:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
 
+/* AI Background Animations */
+@keyframes gradientShift {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+@keyframes aiPulse {
+  0%{opacity:0.3;transform:scale(1)}
+  50%{opacity:0.6;transform:scale(1.1)}
+  100%{opacity:0.3;transform:scale(1)}
+}
+
+@keyframes floatingOrb {
+  0%{transform:translate(0,0) scale(1)}
+  25%{transform:translate(30px,-20px) scale(1.05)}
+  50%{transform:translate(-20px,30px) scale(0.95)}
+  75%{transform:translate(-40px,-30px) scale(1.08)}
+  100%{transform:translate(0,0) scale(1)}
+}
+
+@keyframes neuralPulse {
+  0%{opacity:0.1;box-shadow:0 0 10px rgba(49,232,181,0.3)}
+  50%{opacity:0.4;box-shadow:0 0 30px rgba(49,232,181,0.6)}
+  100%{opacity:0.1;box-shadow:0 0 10px rgba(49,232,181,0.3)}
+}
+
+@keyframes dataStream {
+  0%{transform:translateY(-100%);opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{transform:translateY(100%);opacity:0}
+}
+
+@keyframes aiGlow {
+  0%{background-position:0% 0%}
+  50%{background-position:100% 100%}
+  100%{background-position:0% 0%}
+}
+
+@keyframes shimmer {
+  0%{background-position:200% center}
+  100%{background-position:-200% center}
+}
+
+@keyframes neuralNetwork {
+  0%{opacity:0.1;transform:scale(0.8)}
+  50%{opacity:0.3;transform:scale(1)}
+  100%{opacity:0.1;transform:scale(0.8)}
+}
+
+/* AI-themed background decoration */
+body:before {
+  background:
+    radial-gradient(600px 600px at 20% 50%, rgba(49,232,181,0.08) 0%, transparent 80%),
+    radial-gradient(500px 500px at 80% 30%, rgba(142,167,255,0.06) 0%, transparent 80%),
+    radial-gradient(400px 600px at 40% 80%, rgba(255,122,182,0.05) 0%, transparent 80%),
+    linear-gradient(180deg,rgba(8,10,15,0.05),rgba(8,10,15,0.82));
+  animation:aiGlow 15s ease-in-out infinite;
+  background-size:200% 200%, 200% 200%, 200% 200%, 100% 100%;
+}
+
+/* Floating particles container */
+#main-content:before {
+  content:"";
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    radial-gradient(circle at 15% 50%, rgba(49,232,181,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 85% 40%, rgba(142,167,255,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 50% 90%, rgba(255,122,182,0.03) 0%, transparent 50%);
+  animation:neuralNetwork 8s ease-in-out infinite;
+}
+
+/* AI data stream effect on sections */
+section:before {
+  content:"";
+  position:absolute;
+  top:-100%;
+  left:0;
+  right:0;
+  height:100%;
+  background:linear-gradient(180deg,transparent,rgba(49,232,181,0.08),transparent);
+  pointer-events:none;
+  animation:dataStream 6s linear infinite;
+  z-index:-1;
+  opacity:0.3;
+}
+
+/* Animated gradient text highlight */
+.name, .hero-right h3 {
+  animation:gradientShift 4s ease-in-out infinite;
+  background-size:200% 200%;
+}
+
+/* Neural network effect on cards */
+.card, .dev-card, .project.card {
+  position:relative;
+  overflow:hidden;
+}
+
+.card:before, .dev-card:before, .project.card:before {
+  content:"";
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg,transparent,rgba(49,232,181,0.1),transparent);
+  animation:shimmer 3s infinite;
+  z-index:-1;
+  pointer-events:none;
+}
+
+/* AI scanning effect */
+.hero-right .card:after {
+  content:"";
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:dataStream 4s linear infinite;
+  opacity:0.5;
+}
+
+/* Floating background orbs */
+body {
+  position:relative;
+  overflow-x:hidden;
+}
+
+body::backdrop {
+  animation:floatingOrb 20s ease-in-out infinite;
+}
+
+/* AI pulse effect on accent elements */
+.eyebrow:before, .card-topline span {
+  animation:aiPulse 3s ease-in-out infinite !important;
+}
+
+/* Data visualization effect */
+.signal-row span {
+  position:relative;
+  animation:neuralPulse 2.5s ease-in-out infinite;
+}
+
+/* Terminal glow effect */
+.terminal-card {
+  position:relative;
+  animation:aiPulse 4s ease-in-out infinite;
+}
+
+/* Button AI glow on hover */
+.btn {
+  position:relative;
+  overflow:hidden;
+}
+
+.btn:hover {
+  background:linear-gradient(135deg,var(--accent),var(--accent-3));
+  animation:gradientShift 0.6s ease-in-out;
+}
+
 /* Reference-inspired capsule portfolio UI */
 body{
   background:#030303;
@@ -813,7 +1007,7 @@ body:before,body:after{display:none}
   margin:0 auto;
   min-height:100vh;
   max-height:none;
-  overflow:hidden;
+  overflow-x:hidden;
   border-radius:0;
   background:#030303;
   box-shadow:none;
@@ -866,6 +1060,19 @@ body:before,body:after{display:none}
 .hero:before{display:none}
 .hero-left{max-width:930px}
 .hero-right{display:none}
+
+@media (min-width: 1024px) {
+  .hero {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+  }
+  .hero-left {
+    max-width: none;
+  }
+  .hero-right {
+    display: block !important;
+  }
+}
 .eyebrow{
   margin-bottom:18px;
   color:#9a9a9a;
@@ -1255,4 +1462,227 @@ section h2:before{display:none}
   .signal-row,.stats-grid{grid-template-columns:1fr}
   section h2{font-size:42px}
   .timeline-date,.timeline-body,.project-media,.project-body,.project.card:first-child .project-body{border-radius:34px}
+}
+
+/* Custom SVG and Design Animations */
+
+/* Navigation Icons */
+.nav-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s ease;
+}
+
+.nav-list a {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nav-list a:hover .nav-icon {
+  transform: scale(1.2) rotate(8deg);
+  color: #fff;
+}
+
+/* Button Icons */
+.btn-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  transition: transform 0.3s ease;
+}
+
+.btn:hover .btn-icon {
+  transform: translateY(-2px) scale(1.1);
+}
+
+.btn.outline:hover .btn-icon,
+.btn.ghost:hover .btn-icon {
+  color: var(--accent);
+}
+
+/* Strength Cards Header & Icons */
+.dev-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.dev-card-header span {
+  margin-bottom: 0 !important;
+}
+
+.dev-card-icon {
+  width: 38px;
+  height: 38px;
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px rgba(141, 104, 255, 0.3));
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.3s ease, filter 0.3s ease;
+}
+
+.dev-card:nth-child(1) .dev-card-icon { color: #8d68ff; }
+.dev-card:nth-child(2) .dev-card-icon { color: #ff9d73; }
+.dev-card:nth-child(3) .dev-card-icon { color: #62d8c5; }
+.dev-card:nth-child(4) .dev-card-icon { color: #ffcb66; }
+
+.dev-card:hover .dev-card-icon {
+  transform: scale(1.25) rotate(-10deg);
+  filter: drop-shadow(0 0 12px currentColor);
+}
+
+/* Contact Icons */
+.contact-method {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.contact-icon {
+  width: 20px;
+  height: 20px;
+  color: #ff9d73;
+  stroke: currentColor;
+  fill: none;
+  transition: transform 0.3s ease;
+}
+
+.contact-method:hover .contact-icon {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* AI Core Interactive Visualizer */
+.ai-core-container {
+  width: 100%;
+  max-width: 280px;
+  margin: 15px auto 25px;
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(141,104,255,0.06) 0%, transparent 70%);
+}
+
+.ai-core-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* AI Core Animations */
+@keyframes spin-clockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-counterclockwise {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes pulse-core {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.06); opacity: 1; filter: url(#glow-strong) drop-shadow(0 0 14px rgba(141,104,255,0.6)); }
+}
+
+.ring-outer {
+  transform-origin: 200px 200px;
+  animation: spin-clockwise 28s linear infinite;
+}
+
+.ring-inner {
+  transform-origin: 200px 200px;
+  animation: spin-counterclockwise 16s linear infinite;
+}
+
+.core-hub {
+  transform-origin: 200px 200px;
+  animation: pulse-core 5s ease-in-out infinite;
+}
+
+.net-node {
+  transform-origin: center;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.net-node:hover {
+  transform: scale(1.28);
+  cursor: pointer;
+}
+
+/* flow direction on lines */
+@keyframes flow-data {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+.data-line {
+  stroke-dasharray: 6 6;
+  animation: flow-data 2.2s linear infinite;
+}
+
+.line-1 { animation-duration: 1.6s; }
+.line-2 { animation-duration: 2.6s; }
+.line-3 { animation-duration: 2s; }
+.line-4 { animation-duration: 1.8s; }
+
+/* Animated Floating Background Orbs */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(140px);
+  z-index: -3;
+  pointer-events: none;
+  opacity: 0.14;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.bg-orb-1 {
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(141,104,255,0.45) 0%, transparent 70%);
+  top: -10%;
+  left: -8%;
+  animation: float-orb-1 26s ease-in-out infinite;
+}
+
+.bg-orb-2 {
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, rgba(98,216,197,0.35) 0%, transparent 70%);
+  bottom: -15%;
+  right: -8%;
+  animation: float-orb-2 32s ease-in-out infinite;
+}
+
+.bg-orb-3 {
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(255,157,115,0.28) 0%, transparent 70%);
+  top: 45%;
+  left: 45%;
+  transform: translate(-50%, -50%);
+  animation: float-orb-3 22s ease-in-out infinite;
+}
+
+@keyframes float-orb-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(70px, 90px) scale(1.1); }
+  66% { transform: translate(-50px, 60px) scale(0.9); }
+}
+
+@keyframes float-orb-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-90px, -70px) scale(1.18); }
+}
+
+@keyframes float-orb-3 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(60px, -60px) rotate(180deg) scale(0.85); }
 }
