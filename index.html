@@ -504,26 +504,9 @@
     // Year
     document.getElementById('year').textContent = new Date().getFullYear()
 
-    // Typewriter
-    const roles = ["Full-Stack Developer","AI Engineer","MERN Stack Developer","Generative AI Enthusiast"]
-    let roleIndex = 0, charIndex = 0
+    // Static role label for smoother performance
     const roleEl = document.getElementById('roleType')
-    function typeRole(){
-      const current = roles[roleIndex]
-      if(charIndex <= current.length){
-        roleEl && (roleEl.textContent = current.slice(0, charIndex))
-        charIndex++
-        setTimeout(typeRole, 60)
-      } else setTimeout(eraseRole, 1200)
-    }
-    function eraseRole(){
-      const current = roles[roleIndex]
-      if(charIndex >= 0){
-        roleEl && (roleEl.textContent = current.slice(0, charIndex))
-        charIndex--
-        setTimeout(eraseRole, 30)
-      } else { roleIndex = (roleIndex+1)%roles.length; setTimeout(typeRole, 200) }
-    }
+    if(roleEl) roleEl.textContent = 'Full-Stack Developer'
 
     // Hero entrance
     setTimeout(() => {
@@ -531,7 +514,7 @@
       const right = document.querySelector('.hero-right')
       left && left.classList.add('in')
       right && right.classList.add('in')
-      setTimeout(() => typeRole(), 380)
+      setTimeout(() => typeRole(), 80)
     }, 220)
 
     // Nav toggle
@@ -550,45 +533,86 @@
       }
     }))
 
-    // Scroll progress
-    document.addEventListener('scroll', () => {
-      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight
-      document.getElementById('progress').style.width = (scrollTop/height)*100 + '%'
-    })
+    // Scroll progress is handled by the fluid motion orchestrator below.
 
     // Counters
-    const statEls = document.querySelectorAll('.stat-value')
-    const io = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if(entry.isIntersecting){
-          const el = entry.target
-          const target = +el.dataset.target
-          let v = 0
-          const step = Math.max(1, Math.floor(target/40))
-          const t = setInterval(() => {
-            v += step
-            if(v >= target){ el.textContent = target+'+'; clearInterval(t) }
-            else el.textContent = v
-          }, 25)
-          observer.unobserve(el)
-        }
-      })
-    }, {threshold: 0.4})
-    statEls.forEach(e => io.observe(e))
+    document.querySelectorAll('.stat-value').forEach(el => { el.textContent = el.dataset.target + '+' })
 
     // Reveal on scroll
-    document.querySelectorAll('.card, .project, .timeline-item, .stack-category').forEach(el => el.classList.add('reveal'))
-    const revealObserver = new IntersectionObserver(entries => {
-      entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in') })
-    }, {threshold: 0.12})
-    document.querySelectorAll('.reveal').forEach(e => revealObserver.observe(e))
+    document.querySelectorAll('section h2, .section-kicker, .lead, .card, .project, .timeline-item, .stack-category, .dev-card, .about-grid > div, .stat').forEach(el => el.classList.add('reveal', 'in'))
+    document.querySelectorAll('main > section').forEach(section => section.classList.add('section-transition'))
 
-    // Timeline stagger
-    Array.from(document.querySelectorAll('.timeline .timeline-item')).forEach((it, idx) => {
-      it.style.transitionDelay = (idx * 120) + 'ms'
-    })
+    // Timeline items reveal immediately when they enter the viewport.
 
+    // Premium interactions
+    const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const performanceMode = true
+    const cursor = document.getElementById('cursor')
+    if(cursor && motionOK && !performanceMode && window.matchMedia('(pointer: fine)').matches){
+      let cx = 0, cy = 0, tx = 0, ty = 0
+      const moveCursor = () => {
+        cx += (tx - cx) * 0.22
+        cy += (ty - cy) * 0.22
+        cursor.style.left = cx + 'px'
+        cursor.style.top = cy + 'px'
+        requestAnimationFrame(moveCursor)
+      }
+      window.addEventListener('mousemove', e => {
+        tx = e.clientX; ty = e.clientY
+        cursor.classList.add('is-visible')
+      })
+      window.addEventListener('mouseleave', () => cursor.classList.remove('is-visible'))
+      document.querySelectorAll('a, button, input, textarea, .card, .dev-card, .project').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('is-hovering'))
+        el.addEventListener('mouseleave', () => cursor.classList.remove('is-hovering'))
+      })
+      moveCursor()
+    }
+
+    if(motionOK && !performanceMode){
+      document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('mousemove', e => {
+          const rect = btn.getBoundingClientRect()
+          const x = (e.clientX - rect.left - rect.width / 2) * 0.18
+          const y = (e.clientY - rect.top - rect.height / 2) * 0.18
+          btn.style.setProperty('--mx', x + 'px')
+          btn.style.setProperty('--my', y + 'px')
+        })
+        btn.addEventListener('mouseleave', () => {
+          btn.style.setProperty('--mx', '0px')
+          btn.style.setProperty('--my', '0px')
+        })
+      })
+    }
+
+    const navLinks = document.querySelectorAll('.nav-list a[href^="#"]')
+    navLinks.forEach(link => link.addEventListener('click', () => {
+      navLinks.forEach(item => item.classList.remove('active'))
+      link.classList.add('active')
+    }))
+    // Fluid motion orchestrator
+    const progressEl = document.getElementById('progress')
+
+    let latestScrollY = window.scrollY
+    let ticking = false
+    let scrollTimer
+    const updateFluidMotion = () => {
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+      const progress = Math.min(1, latestScrollY / maxScroll)
+      progressEl && progressEl.style.setProperty('--scroll-progress', progress)
+      document.body.classList.toggle('is-scrolled', latestScrollY > 18)
+      ticking = false
+    }
+    const requestFluidMotion = () => {
+      latestScrollY = window.scrollY
+      if(!ticking){
+        requestAnimationFrame(updateFluidMotion)
+        ticking = true
+      }
+    }
+    document.addEventListener('scroll', requestFluidMotion, { passive: true })
+    window.addEventListener('resize', requestFluidMotion, { passive: true })
+    requestFluidMotion()
     // Contact form
     const form = document.getElementById('contactForm')
     if(form) form.addEventListener('submit', e => {
@@ -599,7 +623,7 @@
 
     // Canvas particles
     const canvas = document.getElementById('bgCanvas')
-    if(canvas){
+    if(canvas && !performanceMode){
       const ctx = canvas.getContext('2d')
       let animationFrameId
       let width = canvas.width = window.innerWidth
@@ -647,3 +671,16 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+

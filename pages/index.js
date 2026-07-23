@@ -1,7 +1,17 @@
 import Head from 'next/head'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+const techNodes = [
+  { id: 'react', label: 'React UI', detail: 'Focused on polished interfaces, motion systems, and product-grade components.', color: '#8d68ff', x: 100, y: 100, labelY: -22, motionDuration: '2.4s' },
+  { id: 'node', label: 'Node API', detail: 'Builds resilient backend services, authentication flows, and API orchestration.', color: '#ff9d73', x: 300, y: 100, labelY: -22, motionDuration: '2.8s' },
+  { id: 'db', label: 'MongoDB', detail: 'Powers flexible document models, indexing, and data pipelines for scale.', color: '#62d8c5', x: 100, y: 300, labelY: 26, motionDuration: '2.2s' },
+  { id: 'ai', label: 'GenAI/LLM', detail: 'Integrates LLM workflows, prompts, automation, and AI-assisted experiences.', color: '#ffcb66', x: 300, y: 300, labelY: 26, motionDuration: '3.2s' }
+]
 
 export default function Home(){
+  const [hoveredNode, setHoveredNode] = useState(null)
+  const cardRef = useRef(null)
+
   useEffect(()=>{
     const loader = document.getElementById('loader')
     document.body.classList.add('loaded')
@@ -9,35 +19,16 @@ export default function Home(){
       loader && loader.remove()
     }, 500)
 
-    // replicate client-side interactions from static build
-    const roles = ["Full-Stack Developer","AI Engineer","MERN Stack Developer","Generative AI Enthusiast"]
-    let roleIndex = 0
-    let charIndex = 0
+    // Static role label for smoother performance
     const roleEl = document.getElementById('roleType')
-    function typeRole(){
-      const current = roles[roleIndex]
-      if(charIndex <= current.length){
-        roleEl && (roleEl.textContent = current.slice(0,charIndex))
-        charIndex++
-        setTimeout(typeRole,60)
-      } else setTimeout(()=>eraseRole(),1200)
-    }
-    function eraseRole(){
-      const current = roles[roleIndex]
-      if(charIndex>=0){
-        roleEl && (roleEl.textContent = current.slice(0,charIndex))
-        charIndex--
-        setTimeout(eraseRole,30)
-      } else {roleIndex = (roleIndex+1)%roles.length; setTimeout(typeRole,200)}
-    }
+    if(roleEl) roleEl.textContent = 'Full-Stack Developer'
 
     setTimeout(()=>{
       const left = document.querySelector('.hero-left')
       const right = document.querySelector('.hero-right')
       left && left.classList.add('in')
       right && right.classList.add('in')
-      setTimeout(()=>typeRole(),380)
-    },220)
+    },80)
 
     // simple interactions reused from static site
     document.getElementById('year').textContent = new Date().getFullYear()
@@ -48,26 +39,115 @@ export default function Home(){
     if(navToggle){navToggle.addEventListener('click',()=>{const open = navList.classList.toggle('open'); navToggle.setAttribute('aria-expanded', open ? 'true' : 'false')})}
     document.querySelectorAll('#nav-list a').forEach(a=>a.addEventListener('click',()=>{if(navList.classList.contains('open')){navList.classList.remove('open');navToggle && navToggle.setAttribute('aria-expanded','false')}}))
 
-    // scroll progress
-    document.addEventListener('scroll',()=>{const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;const pct = (scrollTop/height)*100;document.getElementById('progress').style.width = pct + '%'
-    })
+    // scroll progress is handled by the fluid motion orchestrator below.
 
     // filtering - basic
     document.querySelectorAll('.projects-filter .filter').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.projects-filter .filter').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const filter = btn.dataset.filter;const cards = Array.from(document.querySelectorAll('#projectsGrid .project'));cards.forEach(card=>{const tags = card.dataset.tags.split(',');if(filter==='all' || tags.includes(filter)){card.style.display='';requestAnimationFrame(()=>card.classList.remove('project--hidden'))} else {card.classList.add('project--hidden');const onEnd=(e)=>{if(e.propertyName==='opacity'){card.style.display='none';card.removeEventListener('transitionend',onEnd)}};card.addEventListener('transitionend',onEnd)}})})})
 
     // counters
-    const statEls = document.querySelectorAll('.stat-value')
-    const io = new IntersectionObserver((entries,observer)=>{entries.forEach(entry=>{if(entry.isIntersecting){const el = entry.target;const target = +el.dataset.target;let v = 0;const step = Math.max(1, Math.floor(target/40));const t = setInterval(()=>{v += step;if(v>=target){el.textContent = target+'+';clearInterval(t)} else el.textContent = v},25);observer.unobserve(el)}})}, {threshold:0.4})
-    statEls.forEach(e=>io.observe(e))
+    document.querySelectorAll('.stat-value').forEach(el=>{ el.textContent = el.dataset.target + '+' })
 
     // reveal
-    document.querySelectorAll('.card, .project, .timeline-item, .stack-category').forEach(el=>el.classList.add('reveal'))
-    const revealObserver = new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in')}})}, {threshold:0.12})
-    document.querySelectorAll('.reveal').forEach(e=>revealObserver.observe(e))
+    document.querySelectorAll('section h2, .section-kicker, .lead, .card, .project, .timeline-item, .stack-category, .dev-card, .about-grid > div, .stat').forEach(el=>el.classList.add('reveal','in'))
+    document.querySelectorAll('main > section').forEach(section=>section.classList.add('section-transition'))
+    document.querySelectorAll('.project.card').forEach(card=>card.classList.add('is-preloaded'))
+    document.querySelectorAll('.project img').forEach(img=>{ img.loading = 'eager'; img.decoding = 'async' })
 
-    // timeline stagger
-    const timelineItems = Array.from(document.querySelectorAll('.timeline .timeline-item'))
-    timelineItems.forEach((it, idx)=>{it.style.transitionDelay = (idx * 120) + 'ms'})
+    // timeline items reveal immediately when they enter the viewport.
+
+    // Premium interactions
+    const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const performanceMode = true
+    const cursor = document.getElementById('cursor')
+    const card = cardRef.current
+
+    if (card && motionOK) {
+      const setPointer = (event) => {
+        const rect = card.getBoundingClientRect()
+        const x = event.clientX - rect.left
+        const y = event.clientY - rect.top
+        card.style.setProperty('--pointer-x', `${x}px`)
+        card.style.setProperty('--pointer-y', `${y}px`)
+      }
+      const resetPointer = () => {
+        card.style.setProperty('--pointer-x', '50%')
+        card.style.setProperty('--pointer-y', '50%')
+      }
+      card.addEventListener('pointermove', setPointer)
+      card.addEventListener('pointerleave', resetPointer)
+      return () => {
+        card.removeEventListener('pointermove', setPointer)
+        card.removeEventListener('pointerleave', resetPointer)
+      }
+    }
+    let cursorFrame
+    if(cursor && motionOK && !performanceMode && window.matchMedia('(pointer: fine)').matches){
+      let cx = 0, cy = 0, tx = 0, ty = 0
+      const moveCursor = () => {
+        cx += (tx - cx) * 0.22
+        cy += (ty - cy) * 0.22
+        cursor.style.left = cx + 'px'
+        cursor.style.top = cy + 'px'
+        cursorFrame = requestAnimationFrame(moveCursor)
+      }
+      const handleCursorMove = e => {
+        tx = e.clientX; ty = e.clientY
+        cursor.classList.add('is-visible')
+      }
+      const hideCursor = () => cursor.classList.remove('is-visible')
+      window.addEventListener('mousemove', handleCursorMove)
+      window.addEventListener('mouseleave', hideCursor)
+      document.querySelectorAll('a, button, input, textarea, .card, .dev-card, .project').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('is-hovering'))
+        el.addEventListener('mouseleave', () => cursor.classList.remove('is-hovering'))
+      })
+      moveCursor()
+    }
+
+    if(motionOK && !performanceMode){
+      document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('mousemove', e => {
+          const rect = btn.getBoundingClientRect()
+          const x = (e.clientX - rect.left - rect.width / 2) * 0.18
+          const y = (e.clientY - rect.top - rect.height / 2) * 0.18
+          btn.style.setProperty('--mx', x + 'px')
+          btn.style.setProperty('--my', y + 'px')
+        })
+        btn.addEventListener('mouseleave', () => {
+          btn.style.setProperty('--mx', '0px')
+          btn.style.setProperty('--my', '0px')
+        })
+      })
+    }
+
+    const navLinks = document.querySelectorAll('.nav-list a[href^="#"]')
+    navLinks.forEach(link => link.addEventListener('click', () => {
+      navLinks.forEach(item => item.classList.remove('active'))
+      link.classList.add('active')
+    }))
+    // Fluid motion orchestrator
+    const progressEl = document.getElementById('progress')
+
+    let latestScrollY = window.scrollY
+    let ticking = false
+    let scrollTimer
+    const updateFluidMotion = () => {
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+      const progress = Math.min(1, latestScrollY / maxScroll)
+      progressEl && progressEl.style.setProperty('--scroll-progress', progress)
+      document.body.classList.toggle('is-scrolled', latestScrollY > 18)
+      ticking = false
+    }
+    const requestFluidMotion = () => {
+      latestScrollY = window.scrollY
+      if(!ticking){
+        requestAnimationFrame(updateFluidMotion)
+        ticking = true
+      }
+    }
+    document.addEventListener('scroll', requestFluidMotion, { passive: true })
+    window.addEventListener('resize', requestFluidMotion, { passive: true })
+    requestFluidMotion()
 
     // contact form (no backend)
     const form = document.getElementById('contactForm')
@@ -76,7 +156,7 @@ export default function Home(){
     // Interactive Canvas Particles
     const canvas = document.getElementById('bgCanvas')
     let cleanupCanvas = () => {}
-    if (canvas) {
+    if (canvas && !performanceMode) {
       const ctx = canvas.getContext('2d')
       let animationFrameId
       let width = (canvas.width = window.innerWidth)
@@ -184,7 +264,10 @@ export default function Home(){
     }
 
     return () => {
+      document.removeEventListener('scroll', requestFluidMotion)
+      window.removeEventListener('resize', requestFluidMotion)
       cleanupCanvas()
+      if(cursorFrame) cancelAnimationFrame(cursorFrame)
     }
   },[])
 
@@ -334,14 +417,14 @@ export default function Home(){
           </div>
 
           <div className="hero-right">
-            <div className="card glass">
+            <div className="card glass" ref={cardRef}>
               <div className="card-topline"><span></span><span></span><span></span></div>
               <div className="code-window" aria-hidden="true">
                 <div className="code-line"><span>const</span> developer = "Varun";</div>
                 <div className="code-line"><span>await</span> buildProduct();</div>
                 <div className="code-line"><span>return</span> scalableUI;</div>
               </div>
-              
+
               <div className="ai-core-container">
                 <svg className="ai-core-svg" viewBox="0 0 400 400" width="100%" height="100%">
                   <defs>
@@ -368,50 +451,61 @@ export default function Home(){
                     </linearGradient>
                   </defs>
 
-                  <g className="network-connections" opacity="0.6">
-                    <line x1="200" y1="200" x2="100" y2="100" stroke="#8d68ff" strokeWidth="1.5" className="data-line line-1"/>
-                    <line x1="200" y1="200" x2="300" y2="100" stroke="#ff9d73" strokeWidth="1.5" className="data-line line-2"/>
-                    <line x1="200" y1="200" x2="100" y2="300" stroke="#62d8c5" strokeWidth="1.5" className="data-line line-3"/>
-                    <line x1="200" y1="200" x2="300" y2="300" stroke="#ffcb66" strokeWidth="1.5" className="data-line line-4"/>
-                    
-                    <line x1="100" y1="100" x2="300" y2="100" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
-                    <line x1="300" y1="100" x2="300" y2="300" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
-                    <line x1="300" y1="300" x2="100" y2="300" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
-                    <line x1="100" y1="300" x2="100" y2="100" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+                  <g className="network-connections" opacity="0.65">
+                    <line x1="200" y1="200" x2="100" y2="100" stroke="#8d68ff" strokeWidth="1.5" className="data-line line-1" />
+                    <line x1="200" y1="200" x2="300" y2="100" stroke="#ff9d73" strokeWidth="1.5" className="data-line line-2" />
+                    <line x1="200" y1="200" x2="100" y2="300" stroke="#62d8c5" strokeWidth="1.5" className="data-line line-3" />
+                    <line x1="200" y1="200" x2="300" y2="300" stroke="#ffcb66" strokeWidth="1.5" className="data-line line-4" />
+                    <line x1="100" y1="100" x2="300" y2="100" stroke="rgba(255,255,255,0.16)" strokeWidth="1" />
+                    <line x1="300" y1="100" x2="300" y2="300" stroke="rgba(255,255,255,0.16)" strokeWidth="1" />
+                    <line x1="300" y1="300" x2="100" y2="300" stroke="rgba(255,255,255,0.16)" strokeWidth="1" />
+                    <line x1="100" y1="300" x2="100" y2="100" stroke="rgba(255,255,255,0.16)" strokeWidth="1" />
                   </g>
 
-                  <circle cx="200" cy="200" r="140" fill="none" stroke="rgba(141,104,255,0.15)" strokeWidth="1.5" strokeDasharray="20,10,5,10" className="orbital-ring ring-outer"/>
-                  <circle cx="200" cy="200" r="90" fill="none" stroke="rgba(255,157,115,0.2)" strokeWidth="1" strokeDasharray="40,15" className="orbital-ring ring-inner"/>
+                  <circle cx="200" cy="200" r="148" fill="none" stroke="rgba(141,104,255,0.2)" strokeWidth="1.25" strokeDasharray="22,12,8,12" className="orbital-ring ring-outer" />
+                  <circle cx="200" cy="200" r="104" fill="none" stroke="rgba(255,157,115,0.2)" strokeWidth="1" strokeDasharray="42,16" className="orbital-ring ring-inner" />
+                  <circle cx="200" cy="200" r="82" fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="1" className="pulse-ring" />
+                  <circle cx="200" cy="200" r="64" fill="none" stroke="rgba(116,244,208,0.27)" strokeWidth="1.2" className="ripple-ring ripple-a" />
+                  <circle cx="200" cy="200" r="58" fill="none" stroke="rgba(147,167,255,0.2)" strokeWidth="1.2" className="ripple-ring ripple-b" />
 
                   <g className="core-hub">
-                    <circle cx="200" cy="200" r="32" fill="url(#core-grad)" filter="url(#glow-strong)" className="core-circle"/>
+                    <circle cx="200" cy="200" r="34" fill="url(#core-grad)" filter="url(#glow-strong)" className="core-circle" />
+                    <circle cx="200" cy="200" r="22" fill="rgba(255,255,255,0.14)" className="core-shine" />
                     <text x="200" y="204" textAnchor="middle" fill="#fff" fontSize="10" fontWeight="900" letterSpacing="1" className="core-text">AI CORE</text>
                   </g>
 
-                  <g className="net-node node-react" transform="translate(100, 100)">
-                    <circle cx="0" cy="0" r="14" fill="#0c101b" stroke="#8d68ff" strokeWidth="2.5" filter="url(#glow)" />
-                    <circle cx="0" cy="0" r="6" fill="#8d68ff" />
-                    <text x="0" y="-22" textAnchor="middle" fill="#8d68ff" fontSize="11" fontWeight="800">React UI</text>
-                  </g>
+                  {techNodes.map((node) => (
+                    <g
+                      key={node.id}
+                      className={`net-node ${node.id}`}
+                      transform={`translate(${node.x}, ${node.y})`}
+                      onMouseEnter={() => setHoveredNode(node)}
+                      onMouseLeave={() => setHoveredNode(null)}
+                      onFocus={() => setHoveredNode(node)}
+                      onBlur={() => setHoveredNode(null)}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`${node.label} technology`}
+                    >
+                      <circle cx="0" cy="0" r="17" fill="rgba(8, 11, 18, 0.92)" stroke={node.color} strokeWidth="2.3" filter="url(#glow)" />
+                      <circle cx="0" cy="0" r="6.5" fill={node.color} />
+                      <circle cx="0" cy="0" r="26" fill="none" stroke={node.color} strokeOpacity="0.18" className="node-ring" />
+                      <text x="0" y={node.labelY} textAnchor="middle" fill={node.color} fontSize="11" fontWeight="800">{node.label}</text>
+                    </g>
+                  ))}
 
-                  <g className="net-node node-node" transform="translate(300, 100)">
-                    <circle cx="0" cy="0" r="14" fill="#0c101b" stroke="#ff9d73" strokeWidth="2.5" filter="url(#glow)" />
-                    <circle cx="0" cy="0" r="6" fill="#ff9d73" />
-                    <text x="0" y="-22" textAnchor="middle" fill="#ff9d73" fontSize="11" fontWeight="800">Node API</text>
-                  </g>
-
-                  <g className="net-node node-db" transform="translate(100, 300)">
-                    <circle cx="0" cy="0" r="14" fill="#0c101b" stroke="#62d8c5" strokeWidth="2.5" filter="url(#glow)" />
-                    <circle cx="0" cy="0" r="6" fill="#62d8c5" />
-                    <text x="0" y="26" textAnchor="middle" fill="#62d8c5" fontSize="11" fontWeight="800">MongoDB</text>
-                  </g>
-
-                  <g className="net-node node-ai" transform="translate(300, 300)">
-                    <circle cx="0" cy="0" r="14" fill="#0c101b" stroke="#ffcb66" strokeWidth="2.5" filter="url(#glow)" />
-                    <circle cx="0" cy="0" r="6" fill="#ffcb66" />
-                    <text x="0" y="26" textAnchor="middle" fill="#ffcb66" fontSize="11" fontWeight="800">GenAI/LLM</text>
-                  </g>
+                  {techNodes.map((node) => (
+                    <circle key={`${node.id}-flow`} r="2.4" fill="#ffffff" opacity="0.96">
+                      <animateMotion dur={node.motionDuration} repeatCount="indefinite" path={`M 200 200 L ${node.x} ${node.y}`} />
+                    </circle>
+                  ))}
                 </svg>
+                {hoveredNode && (
+                  <div className="node-tooltip" role="status">
+                    <span className="tooltip-title">{hoveredNode.label}</span>
+                    <span className="tooltip-text">{hoveredNode.detail}</span>
+                  </div>
+                )}
               </div>
 
               <p className="eyebrow">Developer console</p>
@@ -701,3 +795,17 @@ export default function Home(){
     </>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
